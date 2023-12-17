@@ -307,7 +307,15 @@ pub fn vyper(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn huff(input: TokenStream) -> TokenStream {
     let lit_str = parse_macro_input!(input as syn::LitStr);
-    let source_code = lit_str.value();
+    let input_str = lit_str.value();
+
+    // heuristics for checking whether we're referencing a file or raw code
+    let source_code = if input_str.ends_with(".huff") {
+        std::fs::read_to_string(&input_str)
+            .unwrap_or_else(|_| panic!("Unable to read file: {}", input_str))
+    } else {
+        input_str
+    };
 
     let huffc = Compiler {
         kind: CompilerKinds::Huff,
